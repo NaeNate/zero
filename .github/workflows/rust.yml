@@ -1,0 +1,52 @@
+name: Rust
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Cache
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cargo/bin
+          ~/.cargo/registry
+          target
+        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-
+    
+    - name: Build
+      run: cargo build --verbose
+      
+    - name: Test
+      run: cargo test --verbose
+
+    - name: Install Tarpaulin
+      run: cargo install cargo-tarpaulin || true
+    - name: Tarp
+      run: cargo tarpaulin --ignore-tests
+
+    - name: Install Audit
+      run: cargo install cargo-audit || true
+    - name: Audit
+      run: cargo audit
+
+    - name: Lint
+      run: cargo clippy -- -D warnings
+
+    - name: Format
+      run: cargo fmt -- --check
+      
